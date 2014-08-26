@@ -385,6 +385,10 @@ func (p Patch) replace(doc *partialDoc, op operation) error {
 
 	con, key := findObject(doc, path)
 
+	if con == nil {
+		return fmt.Errorf("Missing container: %s", path)
+	}
+
 	con.set(key, op.value())
 
 	return nil
