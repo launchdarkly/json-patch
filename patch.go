@@ -377,6 +377,10 @@ func (p Patch) remove(doc *partialDoc, op operation) error {
 
 	con, key := findObject(doc, path)
 
+	if con == nil {
+		return fmt.Errorf("Missing container: %s", path)
+	}
+
 	return con.remove(key)
 }
 
@@ -398,6 +402,10 @@ func (p Patch) move(doc *partialDoc, op operation) error {
 	from := op.from()
 
 	con, key := findObject(doc, from)
+
+	if con == nil {
+		return fmt.Errorf("Missing container: %s", path)
+	}
 
 	val, err := con.get(key)
 
@@ -422,6 +430,10 @@ func (p Patch) test(doc *partialDoc, op operation) error {
 	path := op.path()
 
 	con, key := findObject(doc, path)
+
+	if con == nil {
+		return eTestFailed
+	}
 
 	val, err := con.get(key)
 
