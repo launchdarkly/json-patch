@@ -400,6 +400,7 @@ func (p Patch) replace(doc *partialDoc, op operation) error {
 
 func (p Patch) move(doc *partialDoc, op operation) error {
 	from := op.from()
+	path := op.path()
 
 	con, key := findObject(doc, from)
 
@@ -414,8 +415,6 @@ func (p Patch) move(doc *partialDoc, op operation) error {
 	}
 
 	con.remove(key)
-
-	path := op.path()
 
 	con, key = findObject(doc, path)
 
