@@ -118,6 +118,10 @@ var BadCases = []BadCase{
 		`{ "foo": "bar" }`,
 		`[ { "op": "add", "path": "/baz/bat", "value": "qux" } ]`,
 	},
+	{
+		`{"foo": []}`,
+		`[ {"op": "add", "path": "/foo/1", "value": "bar"}]`,
+	},
 }
 
 func TestAllCases(t *testing.T) {
@@ -138,7 +142,7 @@ func TestAllCases(t *testing.T) {
 		_, err := applyPatch(c.doc, c.patch)
 
 		if err == nil {
-			t.Errorf("Patch should have failed to apply but it did not")
+			t.Errorf("Patch should have failed to apply but it did not: %+v", c)
 		}
 	}
 }

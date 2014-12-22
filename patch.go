@@ -317,6 +317,10 @@ func (d *partialArray) set(key string, val *lazyNode) error {
 		return err
 	}
 
+	if idx > len(*d) {
+		return fmt.Errorf("Invalid array index %d", idx)
+	}
+
 	ary := make([]*lazyNode, len(*d)+1)
 
 	cur := *d
@@ -367,9 +371,7 @@ func (p Patch) add(doc *partialDoc, op operation) error {
 		return fmt.Errorf("Missing container: %s", path)
 	}
 
-	con.set(key, op.value())
-
-	return nil
+	return con.set(key, op.value())
 }
 
 func (p Patch) remove(doc *partialDoc, op operation) error {
@@ -393,9 +395,7 @@ func (p Patch) replace(doc *partialDoc, op operation) error {
 		return fmt.Errorf("Missing container: %s", path)
 	}
 
-	con.set(key, op.value())
-
-	return nil
+	return con.set(key, op.value())
 }
 
 func (p Patch) move(doc *partialDoc, op operation) error {
@@ -418,9 +418,7 @@ func (p Patch) move(doc *partialDoc, op operation) error {
 
 	con, key = findObject(doc, path)
 
-	con.set(key, val)
-
-	return nil
+	return con.set(key, val)
 }
 
 var eTestFailed = fmt.Errorf("Testing value failed")
