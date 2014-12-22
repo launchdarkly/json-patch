@@ -342,6 +342,10 @@ func (d *partialArray) get(key string) (*lazyNode, error) {
 		return nil, err
 	}
 
+	if idx >= len(*d) {
+		return nil, fmt.Errorf("Invalid array index %d", idx)
+	}
+
 	return (*d)[idx], nil
 }
 
@@ -350,6 +354,10 @@ func (d *partialArray) remove(key string) error {
 
 	if err != nil {
 		return err
+	}
+
+	if idx >= len(*d) {
+		return fmt.Errorf("Invalid array index %d", idx)
 	}
 
 	cur := *d
