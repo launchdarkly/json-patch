@@ -429,7 +429,7 @@ func (p Patch) test(doc *partialDoc, op operation) error {
 	con, key := findObject(doc, path)
 
 	if con == nil {
-		return eTestFailed
+		return fmt.Errorf("Missing container: %s", path)
 	}
 
 	val, err := con.get(key)
