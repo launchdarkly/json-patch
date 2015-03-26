@@ -3,6 +3,8 @@ package jsonpatch
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -15,7 +17,14 @@ func reformatJSON(j string) string {
 }
 
 func compareJSON(a, b string) bool {
-	return Equal([]byte(a), []byte(b))
+	// return Equal([]byte(a), []byte(b))
+
+	var obj_a, obj_b map[string]interface{}
+	json.Unmarshal([]byte(a), &obj_a)
+	json.Unmarshal([]byte(b), &obj_b)
+
+	// fmt.Printf("Comparing %#v\nagainst %#v\n", obj_a, obj_b)
+	return reflect.DeepEqual(obj_a, obj_b)
 }
 
 func applyPatch(doc, patch string) (string, error) {
@@ -107,10 +116,22 @@ var Cases = []Case{
 		`[ { "op": "add", "path": "/foo/-", "value": ["abc", "def"] } ]`,
 		`{ "foo": ["bar", ["abc", "def"]] }`,
 	},
+	{
+		`{ "foo": "bar", "qux": { "baz": 1, "bar": null } }`,
+		`[ { "op": "remove", "path": "/qux/bar" } ]`,
+		`{ "foo": "bar", "qux": { "baz": 1 } }`,
+	},
 }
 
 type BadCase struct {
 	doc, patch string
+}
+
+var MutationTestCases = []BadCase{
+	{
+		`{ "foo": "bar", "qux": { "baz": 1, "bar": null } }`,
+		`[ { "op": "remove", "path": "/qux/bar" } ]`,
+	},
 }
 
 var BadCases = []BadCase{
@@ -134,6 +155,19 @@ func TestAllCases(t *testing.T) {
 		}
 	}
 
+	for _, c := range MutationTestCases {
+		out, err := applyPatch(c.doc, c.patch)
+
+		if err != nil {
+			t.Errorf("Unable to apply patch: %s", err)
+		}
+
+		if compareJSON(out, c.doc) {
+			t.Errorf("Patch did not apply. Original:\n%s\n\nPatched:\n%s",
+				reformatJSON(c.doc), reformatJSON(out))
+		}
+	}
+
 	for _, c := range BadCases {
 		_, err := applyPatch(c.doc, c.patch)
 
@@ -146,24 +180,39 @@ func TestAllCases(t *testing.T) {
 type TestCase struct {
 	doc, patch string
 	result     bool
+	failedPath string
 }
 
 var TestCases = []TestCase{
 	{
 		`{
-       "baz": "qux",
-       "foo": [ "a", 2, "c" ]
-     }`,
+			"baz": "qux",
+			"foo": [ "a", 2, "c" ]
+		}`,
 		`[
-       { "op": "test", "path": "/baz", "value": "qux" },
-       { "op": "test", "path": "/foo/1", "value": 2 }
-     ]`,
+			{ "op": "test", "path": "/baz", "value": "qux" },
+			{ "op": "test", "path": "/foo/1", "value": 2 }
+		]`,
 		true,
+		"",
 	},
 	{
 		`{ "baz": "qux" }`,
 		`[ { "op": "test", "path": "/baz", "value": "bar" } ]`,
 		false,
+		"/baz",
+	},
+	{
+		`{
+			"baz": "qux",
+			"foo": ["a", 2, "c"]
+		}`,
+		`[
+			{ "op": "test", "path": "/baz", "value": "qux" },
+			{ "op": "test", "path": "/foo/1", "value": "c" }
+		]`,
+		false,
+		"/foo/1",
 	},
 }
 
@@ -174,7 +223,12 @@ func TestAllTest(t *testing.T) {
 		if c.result && err != nil {
 			t.Errorf("Testing failed when it should have passed: %s", err)
 		} else if !c.result && err == nil {
-			t.Errorf("Testing passed when it should have faild", err)
+			t.Errorf("Testing passed when it should have faild: %s", err)
+		} else if !c.result {
+			expected := fmt.Sprintf("Testing value %s failed", c.failedPath)
+			if err.Error() != expected {
+				t.Errorf("Testing failed as expected but invalid message: expected [%s], got [%s]", expected, err)
+			}
 		}
 	}
 }
