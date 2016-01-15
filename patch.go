@@ -405,6 +405,8 @@ func (p Patch) replace(doc *partialDoc, op operation) error {
 		return fmt.Errorf("Missing container: %s", path)
 	}
 
+	con.remove(key)
+
 	return con.set(key, op.value())
 }
 
