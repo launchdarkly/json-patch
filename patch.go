@@ -3,6 +3,7 @@ package jsonpatch
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -42,6 +43,9 @@ func newLazyNode(raw *json.RawMessage) *lazyNode {
 func (n *lazyNode) MarshalJSON() ([]byte, error) {
 	switch n.which {
 	case eRaw:
+		if n.raw == nil {
+			return nil, errors.New("Missing value")
+		}
 		return *n.raw, nil
 	case eDoc:
 		return json.Marshal(n.doc)
@@ -260,7 +264,9 @@ func findObject(pd *partialDoc, path string) (container, string) {
 	doc := container(pd)
 
 	split := strings.Split(path, "/")
-
+	if len(split) <= 1 {
+		return nil, ""
+	}
 	parts := split[1 : len(split)-1]
 
 	key := split[len(split)-1]
