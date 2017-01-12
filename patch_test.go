@@ -23,7 +23,7 @@ func applyPatch(doc, patch string) (string, error) {
 	obj, err := DecodePatch([]byte(patch))
 
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	out, err := obj.Apply([]byte(doc))
@@ -146,8 +146,15 @@ var BadCases = []BadCase{
 		`{"foo": []}`,
 		`[{"op": "add", "path": "/foo/0/bar"}]`,
 	},
+	{
+		`{"foo": []}`,
+		`[ {"op": "add", "path": "", "value": "bar"}]`,
+	},
+	{
+		`{ "baz": "qux", "foo": "bar" }`,
+		`[ { "op": "replace", "path": "/baz", "value": null } ]`,
+	},
 }
-
 func TestAllCases(t *testing.T) {
 	for _, c := range Cases {
 		out, err := applyPatch(c.doc, c.patch)
@@ -162,11 +169,13 @@ func TestAllCases(t *testing.T) {
 		}
 	}
 
-	for _, c := range BadCases {
+	for i, c := range BadCases {
 		_, err := applyPatch(c.doc, c.patch)
 
 		if err == nil {
 			t.Errorf("Patch should have failed to apply but it did not: %+v", c)
+		} else {
+			t.Logf("BadCases[%d]: Got expected error: %s", i, err.Error())
 		}
 	}
 }
