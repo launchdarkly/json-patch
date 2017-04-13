@@ -123,6 +123,11 @@ var Cases = []Case{
 		`[ { "op": "replace", "path": "/foo/1", "value": "bum"}]`,
 		`{ "foo": ["bar", "bum","baz"]}`,
 	},
+	{
+		`{ "baz": "qux", "foo": "bar" }`,
+		`[ { "op": "replace", "path": "/baz", "value": null } ]`,
+		`{ "baz": null, "foo": "bar"}`,
+	},
 }
 
 type BadCase struct {
@@ -150,11 +155,8 @@ var BadCases = []BadCase{
 		`{"foo": []}`,
 		`[ {"op": "add", "path": "", "value": "bar"}]`,
 	},
-	{
-		`{ "baz": "qux", "foo": "bar" }`,
-		`[ { "op": "replace", "path": "/baz", "value": null } ]`,
-	},
 }
+
 func TestAllCases(t *testing.T) {
 	for _, c := range Cases {
 		out, err := applyPatch(c.doc, c.patch)

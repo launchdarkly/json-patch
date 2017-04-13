@@ -3,7 +3,6 @@ package jsonpatch
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -43,10 +42,7 @@ func newLazyNode(raw *json.RawMessage) *lazyNode {
 func (n *lazyNode) MarshalJSON() ([]byte, error) {
 	switch n.which {
 	case eRaw:
-		if n.raw == nil {
-			return nil, errors.New("Missing value")
-		}
-		return *n.raw, nil
+		return json.Marshal(n.raw)
 	case eDoc:
 		return json.Marshal(n.doc)
 	case eAry:
