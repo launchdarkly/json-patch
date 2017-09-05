@@ -153,6 +153,14 @@ var BadCases = []BadCase{
 	},
 	{
 		`{"foo": []}`,
+		`[{"op": "remove", "path": "/foo/-1"}]`,
+	},
+	{
+		`{"foo": []}`,
+		`[{"op": "add", "path": "/foo/-1", "value": "bar"}]`,
+	},
+	{
+		`{"foo": []}`,
 		`[ {"op": "add", "path": "", "value": "bar"}]`,
 	},
 }

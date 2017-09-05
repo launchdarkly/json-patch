@@ -321,7 +321,7 @@ func (d *partialArray) set(key string, val *lazyNode) error {
 		return err
 	}
 
-	if idx > len(*d) {
+	if idx < 0 || idx > len(*d) {
 		return fmt.Errorf("Invalid array index %d", idx)
 	}
 
@@ -344,7 +344,7 @@ func (d *partialArray) get(key string) (*lazyNode, error) {
 		return nil, err
 	}
 
-	if idx >= len(*d) {
+	if idx < 0 || idx >= len(*d) {
 		return nil, fmt.Errorf("Invalid array index %d", idx)
 	}
 
@@ -358,7 +358,7 @@ func (d *partialArray) remove(key string) error {
 		return err
 	}
 
-	if idx >= len(*d) {
+	if idx < 0 || idx >= len(*d) {
 		return fmt.Errorf("Invalid array index %d", idx)
 	}
 
