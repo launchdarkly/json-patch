@@ -426,13 +426,9 @@ func (d *partialArray) remove(key string) error {
 		return err
 	}
 
-	if idx < 0 || idx >= len(*d) {
-		return fmt.Errorf("Invalid array index %d", idx)
-	}
-
 	cur := *d
 
-	if idx >= len(cur) {
+	if idx < 0 || idx >= len(cur) {
 		return fmt.Errorf("Unable to remove invalid index: %d", idx)
 	}
 
