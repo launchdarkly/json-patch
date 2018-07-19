@@ -485,7 +485,6 @@ func (p Patch) replace(doc *container, op operation) error {
 
 func (p Patch) move(doc *container, op operation) error {
 	from := op.from()
-	path := op.path()
 
 	con, key := findObject(doc, from)
 
@@ -502,6 +501,8 @@ func (p Patch) move(doc *container, op operation) error {
 	if err != nil {
 		return err
 	}
+
+	path := op.path()
 
 	con, key = findObject(doc, path)
 
