@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -16,7 +17,14 @@ func reformatJSON(j string) string {
 }
 
 func compareJSON(a, b string) bool {
-	return Equal([]byte(a), []byte(b))
+	// return Equal([]byte(a), []byte(b))
+
+	var objA, objB map[string]interface{}
+	json.Unmarshal([]byte(a), &objA)
+	json.Unmarshal([]byte(b), &objB)
+
+	// fmt.Printf("Comparing %#v\nagainst %#v\n", objA, objB)
+	return reflect.DeepEqual(objA, objB)
 }
 
 func applyPatch(doc, patch string) (string, error) {
@@ -43,19 +51,26 @@ var Cases = []Case{
 	{
 		`{ "foo": "bar"}`,
 		`[
-         { "op": "add", "path": "/baz", "value": "qux" }
-     ]`,
+        { "op": "add", "path": "/baz", "value": "qux" }
+    ]`,
 		`{
-       "baz": "qux",
-       "foo": "bar"
-     }`,
+      "baz": "qux",
+      "foo": "bar"
+    }`,
 	},
 	{
 		`{ "foo": [ "bar", "baz" ] }`,
 		`[
-     { "op": "add", "path": "/foo/1", "value": "qux" }
-    ]`,
+    { "op": "add", "path": "/foo/1", "value": "qux" }
+   ]`,
 		`{ "foo": [ "bar", "qux", "baz" ] }`,
+	},
+	{
+		`{ "foo": [ "bar", "baz" ] }`,
+		`[
+    { "op": "add", "path": "/foo/-1", "value": "qux" }
+   ]`,
+		`{ "foo": [ "bar", "baz", "qux" ] }`,
 	},
 	{
 		`{ "baz": "qux", "foo": "bar" }`,
@@ -73,25 +88,45 @@ var Cases = []Case{
 		`{ "baz": "boo", "foo": "bar" }`,
 	},
 	{
+		`{ "bar": [{"baz": null}]}`,
+		`[ { "op": "replace", "path": "/bar/0/baz", "value": 1 } ]`,
+		`{ "bar": [{"baz": 1}]}`,
+	},
+	{
+		`{ "bar": [{"baz": 1}]}`,
+		`[ { "op": "replace", "path": "/bar/0/baz", "value": null } ]`,
+		`{ "bar": [{"baz": null}]}`,
+	},
+	{
+		`{ "bar": [null]}`,
+		`[ { "op": "replace", "path": "/bar/0", "value": 1 } ]`,
+		`{ "bar": [1]}`,
+	},
+	{
+		`{ "bar": [1]}`,
+		`[ { "op": "replace", "path": "/bar/0", "value": null } ]`,
+		`{ "bar": [null]}`,
+	},
+	{
 		`{
-     "foo": {
-       "bar": "baz",
-       "waldo": "fred"
-     },
-     "qux": {
-       "corge": "grault"
-     }
-   }`,
+    "foo": {
+      "bar": "baz",
+      "waldo": "fred"
+    },
+    "qux": {
+      "corge": "grault"
+    }
+  }`,
 		`[ { "op": "move", "from": "/foo/waldo", "path": "/qux/thud" } ]`,
 		`{
-     "foo": {
-       "bar": "baz"
-     },
-     "qux": {
-       "corge": "grault",
-       "thud": "fred"
-     }
-   }`,
+    "foo": {
+      "bar": "baz"
+    },
+    "qux": {
+      "corge": "grault",
+      "thud": "fred"
+    }
+  }`,
 	},
 	{
 		`{ "foo": [ "all", "grass", "cows", "eat" ] }`,
@@ -107,6 +142,16 @@ var Cases = []Case{
 		`{ "foo": ["bar"] }`,
 		`[ { "op": "add", "path": "/foo/-", "value": ["abc", "def"] } ]`,
 		`{ "foo": ["bar", ["abc", "def"]] }`,
+	},
+	{
+		`{ "foo": "bar", "qux": { "baz": 1, "bar": null } }`,
+		`[ { "op": "remove", "path": "/qux/bar" } ]`,
+		`{ "foo": "bar", "qux": { "baz": 1 } }`,
+	},
+	{
+		`{ "foo": "bar" }`,
+		`[ { "op": "add", "path": "/baz", "value": null } ]`,
+		`{ "baz": null, "foo": "bar" }`,
 	},
 	{
 		`{ "foo": ["bar"]}`,
@@ -128,10 +173,41 @@ var Cases = []Case{
 		`[ { "op": "replace", "path": "/baz", "value": null } ]`,
 		`{ "baz": null, "foo": "bar"}`,
 	},
+	{
+		`[ {"foo": ["bar","qux","baz"]}]`,
+		`[ { "op": "replace", "path": "/0/foo/0", "value": "bum"}]`,
+		`[ {"foo": ["bum","qux","baz"]}]`,
+	},
+	{
+		`[ {"foo": ["bar","qux","baz"], "bar": ["qux","baz"]}]`,
+		`[ { "op": "copy", "from": "/0/foo/0", "path": "/0/bar/0"}]`,
+		`[ {"foo": ["bar","qux","baz"], "bar": ["bar", "baz"]}]`,
+	},
+	{
+		`[ {"foo": ["bar","qux","baz"], "bar": ["qux","baz"]}]`,
+		`[ { "op": "copy", "from": "/0/foo/0", "path": "/0/bar"}]`,
+		`[ {"foo": ["bar","qux","baz"], "bar": ["bar", "qux", "baz"]}]`,
+	},
+	{
+		`[ { "foo": {"bar": ["qux","baz"]}, "baz": {"qux": "bum"}}]`,
+		`[ { "op": "copy", "from": "/0/foo/bar", "path": "/0/baz/bar"}]`,
+		`[ { "baz": {"bar": ["qux","baz"], "qux":"bum"}, "foo": {"bar": ["qux","baz"]}}]`,
+	},
 }
 
 type BadCase struct {
 	doc, patch string
+}
+
+var MutationTestCases = []BadCase{
+	{
+		`{ "foo": "bar", "qux": { "baz": 1, "bar": null } }`,
+		`[ { "op": "remove", "path": "/qux/bar" } ]`,
+	},
+	{
+		`{ "foo": "bar", "qux": { "baz": 1, "bar": null } }`,
+		`[ { "op": "replace", "path": "/qux/baz", "value": null } ]`,
+	},
 }
 
 var BadCases = []BadCase{
@@ -157,11 +233,64 @@ var BadCases = []BadCase{
 	},
 	{
 		`{"foo": []}`,
-		`[{"op": "add", "path": "/foo/-1", "value": "bar"}]`,
+		`[ {"op": "add", "path": "", "value": "bar"}]`,
 	},
 	{
-		`{"foo": []}`,
-		`[ {"op": "add", "path": "", "value": "bar"}]`,
+	`{ "a": { "b": { "d": 1 } } }`,
+		`[ { "op": "remove", "path": "/a/b/c" } ]`,
+	},
+	{
+		`{ "a": { "b": { "d": 1 } } }`,
+		`[ { "op": "move", "from": "/a/b/c", "path": "/a/b/e" } ]`,
+	},
+	{
+		`{ "a": { "b": [1] } }`,
+		`[ { "op": "remove", "path": "/a/b/1" } ]`,
+	},
+	{
+		`{ "a": { "b": [1] } }`,
+		`[ { "op": "move", "from": "/a/b/1", "path": "/a/b/2" } ]`,
+	},
+	{
+		`{ "foo": "bar" }`,
+		`[ { "op": "add", "pathz": "/baz", "value": "qux" } ]`,
+	},
+	{
+		`{ "foo": "bar" }`,
+		`[ { "op": "add", "path": "", "value": "qux" } ]`,
+	},
+	{
+		`{ "foo": ["bar","baz"]}`,
+		`[ { "op": "replace", "path": "/foo/2", "value": "bum"}]`,
+	},
+	{
+		`{ "foo": ["bar","baz"]}`,
+		`[ { "op": "add", "path": "/foo/-4", "value": "bum"}]`,
+	},
+
+	{
+		`{ "name":{ "foo": "bat", "qux": "bum"}}`,
+		`[ { "op": "replace", "path": "/foo/bar", "value":"baz"}]`,
+	},
+	{
+		`{ "foo": ["bar"]}`,
+		`[ {"op": "add", "path": "/foo/2", "value": "bum"}]`,
+	},
+	{
+		`{ "foo": ["bar"]}`,
+		`[ {"op":null,"path":"","value":null} ]`,
+	},
+	{
+		`{}`,
+		`[ {"op":"add","path":null} ]`,
+	},
+	{
+		`{}`,
+		`[ {"op":null,"path":"/foo"} ]`,
+	},
+	{
+		`{}`,
+		`[ { "op": "copy", "from": null }]`,
 	},
 }
 
@@ -176,6 +305,19 @@ func TestAllCases(t *testing.T) {
 		if !compareJSON(out, c.result) {
 			t.Errorf("Patch did not apply. Expected:\n%s\n\nActual:\n%s",
 				reformatJSON(c.result), reformatJSON(out))
+		}
+	}
+
+	for _, c := range MutationTestCases {
+		out, err := applyPatch(c.doc, c.patch)
+
+		if err != nil {
+			t.Errorf("Unable to apply patch: %s", err)
+		}
+
+		if compareJSON(out, c.doc) {
+			t.Errorf("Patch did not apply. Original:\n%s\n\nPatched:\n%s",
+				reformatJSON(c.doc), reformatJSON(out))
 		}
 	}
 
@@ -199,13 +341,13 @@ type TestCase struct {
 var TestCases = []TestCase{
 	{
 		`{
-			"baz": "qux",
-			"foo": [ "a", 2, "c" ]
-		}`,
+      "baz": "qux",
+      "foo": [ "a", 2, "c" ]
+    }`,
 		`[
-			{ "op": "test", "path": "/baz", "value": "qux" },
-			{ "op": "test", "path": "/foo/1", "value": 2 }
-		]`,
+      { "op": "test", "path": "/baz", "value": "qux" },
+      { "op": "test", "path": "/foo/1", "value": 2 }
+    ]`,
 		true,
 		"",
 	},
@@ -217,15 +359,51 @@ var TestCases = []TestCase{
 	},
 	{
 		`{
-			"baz": "qux",
-			"foo": ["a", 2, "c"]
-		}`,
+      "baz": "qux",
+      "foo": ["a", 2, "c"]
+    }`,
 		`[
-			{ "op": "test", "path": "/baz", "value": "qux" },
-			{ "op": "test", "path": "/foo/1", "value": "c" }
-		]`,
+      { "op": "test", "path": "/baz", "value": "qux" },
+      { "op": "test", "path": "/foo/1", "value": "c" }
+    ]`,
 		false,
 		"/foo/1",
+	},
+	{
+		`{ "baz": "qux" }`,
+		`[ { "op": "test", "path": "/foo", "value": 42 } ]`,
+		false,
+		"/foo",
+	},
+	{
+		`{ "baz": "qux" }`,
+		`[ { "op": "test", "path": "/foo", "value": null } ]`,
+		true,
+		"",
+	},
+	{
+		`{ "foo": null }`,
+		`[ { "op": "test", "path": "/foo", "value": null } ]`,
+		true,
+		"",
+	},
+	{
+		`{ "foo": {} }`,
+		`[ { "op": "test", "path": "/foo", "value": null } ]`,
+		false,
+		"/foo",
+	},
+	{
+		`{ "foo": [] }`,
+		`[ { "op": "test", "path": "/foo", "value": null } ]`,
+		false,
+		"/foo",
+	},
+	{
+		`{ "baz/foo": "qux" }`,
+		`[ { "op": "test", "path": "/baz~1foo", "value": "qux"} ]`,
+		true,
+		"",
 	},
 }
 
