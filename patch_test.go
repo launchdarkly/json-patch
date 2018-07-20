@@ -51,25 +51,25 @@ var Cases = []Case{
 	{
 		`{ "foo": "bar"}`,
 		`[
-         { "op": "add", "path": "/baz", "value": "qux" }
-     ]`,
+        { "op": "add", "path": "/baz", "value": "qux" }
+    ]`,
 		`{
-       "baz": "qux",
-       "foo": "bar"
-     }`,
+      "baz": "qux",
+      "foo": "bar"
+    }`,
 	},
 	{
 		`{ "foo": [ "bar", "baz" ] }`,
 		`[
-     { "op": "add", "path": "/foo/1", "value": "qux" }
-    ]`,
+    { "op": "add", "path": "/foo/1", "value": "qux" }
+   ]`,
 		`{ "foo": [ "bar", "qux", "baz" ] }`,
 	},
 	{
 		`{ "foo": [ "bar", "baz" ] }`,
 		`[
-     { "op": "add", "path": "/foo/-1", "value": "qux" }
-    ]`,
+    { "op": "add", "path": "/foo/-1", "value": "qux" }
+   ]`,
 		`{ "foo": [ "bar", "baz", "qux" ] }`,
 	},
 	{
@@ -88,25 +88,45 @@ var Cases = []Case{
 		`{ "baz": "boo", "foo": "bar" }`,
 	},
 	{
+		`{ "bar": [{"baz": null}]}`,
+		`[ { "op": "replace", "path": "/bar/0/baz", "value": 1 } ]`,
+		`{ "bar": [{"baz": 1}]}`,
+	},
+	{
+		`{ "bar": [{"baz": 1}]}`,
+		`[ { "op": "replace", "path": "/bar/0/baz", "value": null } ]`,
+		`{ "bar": [{"baz": null}]}`,
+	},
+	{
+		`{ "bar": [null]}`,
+		`[ { "op": "replace", "path": "/bar/0", "value": 1 } ]`,
+		`{ "bar": [1]}`,
+	},
+	{
+		`{ "bar": [1]}`,
+		`[ { "op": "replace", "path": "/bar/0", "value": null } ]`,
+		`{ "bar": [null]}`,
+	},
+	{
 		`{
-     "foo": {
-       "bar": "baz",
-       "waldo": "fred"
-     },
-     "qux": {
-       "corge": "grault"
-     }
-   }`,
+    "foo": {
+      "bar": "baz",
+      "waldo": "fred"
+    },
+    "qux": {
+      "corge": "grault"
+    }
+  }`,
 		`[ { "op": "move", "from": "/foo/waldo", "path": "/qux/thud" } ]`,
 		`{
-     "foo": {
-       "bar": "baz"
-     },
-     "qux": {
-       "corge": "grault",
-       "thud": "fred"
-     }
-   }`,
+    "foo": {
+      "bar": "baz"
+    },
+    "qux": {
+      "corge": "grault",
+      "thud": "fred"
+    }
+  }`,
 	},
 	{
 		`{ "foo": [ "all", "grass", "cows", "eat" ] }`,
