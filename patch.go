@@ -205,6 +205,9 @@ func (n *lazyNode) equal(o *lazyNode) bool {
 
 func (o operation) kind() string {
 	if obj, ok := o["op"]; ok {
+		if obj == nil {
+			return "unknown"
+		}
 		var op string
 
 		err := json.Unmarshal(*obj, &op)
