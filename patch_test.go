@@ -281,8 +281,16 @@ var BadCases = []BadCase{
 		`[ {"op":null,"path":"","value":null} ]`,
 	},
 	{
-		`{ "foo": ["bar"]}`,
-		`[ {"op":"","path":null} ]`,
+		`{}`,
+		`[ {"op":"add","path":null} ]`,
+	},
+	{
+		`{}`,
+		`[ {"op":null,"path":"/foo"} ]`,
+	},
+	{
+		`{}`,
+		`[ { "op": "copy", "from": null }]`,
 	},
 }
 
