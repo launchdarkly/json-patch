@@ -220,7 +220,7 @@ func (o operation) kind() string {
 }
 
 func (o operation) path() string {
-	if obj, ok := o["path"]; ok && obj != nil  {
+	if obj, ok := o["path"]; ok && obj != nil {
 		var op string
 
 		err := json.Unmarshal(*obj, &op)
@@ -257,6 +257,22 @@ func (o operation) value() *lazyNode {
 	}
 
 	return nil
+}
+
+func (o operation) valueString() string {
+	if obj, ok := o["value"]; ok {
+		var val string
+
+		err := json.Unmarshal(*obj, &val)
+
+		if err != nil {
+			return "unknown"
+		}
+
+		return val
+	}
+
+	return "unknown"
 }
 
 func isArray(buf []byte) bool {
@@ -660,4 +676,27 @@ var (
 
 func decodePatchKey(k string) string {
 	return rfc6901Decoder.Replace(k)
+}
+
+// NameTBD determines if a param of a patch operation matches a given string
+func NameTBD(op operation, param string, matchText string) bool {
+	switch param {
+	case "kind":
+		if op.kind() == matchText {
+			return true
+		}
+	case "path":
+		if op.path() == matchText {
+			return true
+		}
+	case "value":
+		if op.valueString() == matchText {
+			return true
+		}
+	case "from":
+		if op.from() == matchText {
+			return true
+		}
+	}
+	return false
 }
