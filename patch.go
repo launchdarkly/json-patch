@@ -678,8 +678,8 @@ func decodePatchKey(k string) string {
 	return rfc6901Decoder.Replace(k)
 }
 
-// NameTBD determines if a param of a patch operation matches a given string
-func NameTBD(op operation, param string, matchText string) bool {
+// DoesOpParamMatchString determines if a param of a patch operation matches a given string
+func DoesOpParamMatchString(op operation, param string, matchText string) bool {
 	switch param {
 	case "kind":
 		if op.kind() == matchText {
