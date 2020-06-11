@@ -31,7 +31,7 @@ func applyPatch(doc, patch string) (string, error) {
 	obj, err := DecodePatch([]byte(patch))
 
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
 	out, err := obj.Apply([]byte(doc))
