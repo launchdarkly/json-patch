@@ -31,7 +31,7 @@ func applyPatch(doc, patch string) (string, error) {
 	obj, err := DecodePatch([]byte(patch))
 
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
 	out, err := obj.Apply([]byte(doc))
@@ -59,25 +59,25 @@ var Cases = []Case{
 	{
 		`{ "foo": "bar"}`,
 		`[
-        { "op": "add", "path": "/baz", "value": "qux" }
-    ]`,
+         { "op": "add", "path": "/baz", "value": "qux" }
+     ]`,
 		`{
-      "baz": "qux",
-      "foo": "bar"
-    }`,
+       "baz": "qux",
+       "foo": "bar"
+     }`,
 	},
 	{
 		`{ "foo": [ "bar", "baz" ] }`,
 		`[
-    { "op": "add", "path": "/foo/1", "value": "qux" }
-   ]`,
+     { "op": "add", "path": "/foo/1", "value": "qux" }
+    ]`,
 		`{ "foo": [ "bar", "qux", "baz" ] }`,
 	},
 	{
 		`{ "foo": [ "bar", "baz" ] }`,
 		`[
-    { "op": "add", "path": "/foo/-1", "value": "qux" }
-   ]`,
+     { "op": "add", "path": "/foo/-1", "value": "qux" }
+    ]`,
 		`{ "foo": [ "bar", "baz", "qux" ] }`,
 	},
 	{
@@ -96,45 +96,25 @@ var Cases = []Case{
 		`{ "baz": "boo", "foo": "bar" }`,
 	},
 	{
-		`{ "bar": [{"baz": null}]}`,
-		`[ { "op": "replace", "path": "/bar/0/baz", "value": 1 } ]`,
-		`{ "bar": [{"baz": 1}]}`,
-	},
-	{
-		`{ "bar": [{"baz": 1}]}`,
-		`[ { "op": "replace", "path": "/bar/0/baz", "value": null } ]`,
-		`{ "bar": [{"baz": null}]}`,
-	},
-	{
-		`{ "bar": [null]}`,
-		`[ { "op": "replace", "path": "/bar/0", "value": 1 } ]`,
-		`{ "bar": [1]}`,
-	},
-	{
-		`{ "bar": [1]}`,
-		`[ { "op": "replace", "path": "/bar/0", "value": null } ]`,
-		`{ "bar": [null]}`,
-	},
-	{
 		`{
-    "foo": {
-      "bar": "baz",
-      "waldo": "fred"
-    },
-    "qux": {
-      "corge": "grault"
-    }
-  }`,
+     "foo": {
+       "bar": "baz",
+       "waldo": "fred"
+     },
+     "qux": {
+       "corge": "grault"
+     }
+   }`,
 		`[ { "op": "move", "from": "/foo/waldo", "path": "/qux/thud" } ]`,
 		`{
-    "foo": {
-      "bar": "baz"
-    },
-    "qux": {
-      "corge": "grault",
-      "thud": "fred"
-    }
-  }`,
+     "foo": {
+       "bar": "baz"
+     },
+     "qux": {
+       "corge": "grault",
+       "thud": "fred"
+     }
+   }`,
 	},
 	{
 		`{ "foo": [ "all", "grass", "cows", "eat" ] }`,
@@ -180,11 +160,6 @@ var Cases = []Case{
 		`{ "foo": ["bar","qux","baz"]}`,
 		`[ { "op": "replace", "path": "/foo/1", "value": "bum"}]`,
 		`{ "foo": ["bar", "bum","baz"]}`,
-	},
-	{
-		`{ "baz": "qux", "foo": "bar" }`,
-		`[ { "op": "replace", "path": "/baz", "value": null } ]`,
-		`{ "baz": null, "foo": "bar"}`,
 	},
 	{
 		`[ {"foo": ["bar","qux","baz"]}]`,
@@ -277,27 +252,7 @@ var BadCases = []BadCase{
 		`[ { "op": "add", "path": "/baz/bat", "value": "qux" } ]`,
 	},
 	{
-		`{"foo": []}`,
-		`[ {"op": "add", "path": "/foo/1", "value": "bar"}]`,
-	},
-	{
-		`{"foo": []}`,
-		`[{"op": "remove", "path": "/foo/0"}]`,
-	},
-	{
-		`{"foo": []}`,
-		`[{"op": "add", "path": "/foo/0/bar"}]`,
-	},
-	{
-		`{"foo": []}`,
-		`[{"op": "remove", "path": "/foo/-1"}]`,
-	},
-	{
-		`{"foo": []}`,
-		`[ {"op": "add", "path": "", "value": "bar"}]`,
-	},
-	{
-	`{ "a": { "b": { "d": 1 } } }`,
+		`{ "a": { "b": { "d": 1 } } }`,
 		`[ { "op": "remove", "path": "/a/b/c" } ]`,
 	},
 	{
@@ -335,18 +290,6 @@ var BadCases = []BadCase{
 	{
 		`{ "foo": ["bar"]}`,
 		`[ {"op": "add", "path": "/foo/2", "value": "bum"}]`,
-	},
-	{
-		`{ "foo": ["bar"]}`,
-		`[ {"op":null,"path":"","value":null} ]`,
-	},
-	{
-		`{}`,
-		`[ {"op":"add","path":null} ]`,
-	},
-	{
-		`{}`,
-		`[ {"op":null,"path":"/foo"} ]`,
 	},
 	{
 		`{ "foo": []}`,
