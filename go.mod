@@ -1,4 +1,4 @@
-module github.com/evanphx/json-patch
+module github.com/launchdarkly/json-patch
 
 go 1.12
 
