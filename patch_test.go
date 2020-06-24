@@ -297,7 +297,7 @@ var BadCases = []BadCase{
 		`[ {"op": "add", "path": "", "value": "bar"}]`,
 	},
 	{
-	`{ "a": { "b": { "d": 1 } } }`,
+		`{ "a": { "b": { "d": 1 } } }`,
 		`[ { "op": "remove", "path": "/a/b/c" } ]`,
 	},
 	{
@@ -393,15 +393,6 @@ var BadCases = []BadCase{
 	{
 		`{ "foo": [ "all", "grass", "cows", "eat" ] }`,
 		`[ { "op": "move", "from": "/foo/1", "path": "/foo/4" } ]`,
-	},
-	{
-		`{ "baz": "qux" }`,
-		`[ { "op": "replace", "path": "/foo", "value": "bar" } ]`,
-	},
-	// Can't copy from non-existent "from" key.
-	{
-		`{ "foo": "bar"}`,
-		`[{"op": "copy", "path": "/qux", "from": "/baz"}]`,
 	},
 }
 
@@ -542,6 +533,18 @@ var TestCases = []TestCase{
 		true,
 		"/baz",
 	},
+	{
+		`{ "baz": "qux" }`,
+		`[ { "op": "replace", "path": "/foo", "value": "bar" } ]`,
+		true,
+		"",
+	},
+	{
+		`{ "foo": "bar"}`,
+		`[{"op": "copy", "path": "/qux", "from": "/baz"}]`,
+		true,
+		"",
+	},
 }
 
 func TestAllTest(t *testing.T) {
@@ -597,12 +600,12 @@ func TestAdd(t *testing.T) {
 			err:  "Unable to access invalid index: -2: invalid index referenced",
 		},
 		{
-			name: "negative but negative disabled",
-			key:  "-1",
-			val:  lazyNode{},
-			arr:  partialArray{},
+			name:                   "negative but negative disabled",
+			key:                    "-1",
+			val:                    lazyNode{},
+			arr:                    partialArray{},
 			rejectNegativeIndicies: true,
-			err: "Unable to access invalid index: -1: invalid index referenced",
+			err:                    "Unable to access invalid index: -1: invalid index referenced",
 		},
 	}
 	for _, tc := range testCases {

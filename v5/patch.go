@@ -392,11 +392,7 @@ func (d *partialDoc) add(key string, val *lazyNode) error {
 }
 
 func (d *partialDoc) get(key string) (*lazyNode, error) {
-	v, ok := (*d)[key]
-	if !ok {
-		return v, errors.Wrapf(ErrMissing, "unable to get nonexistent key: %s", key)
-	}
-	return v, nil
+	return (*d)[key], nil
 }
 
 func (d *partialDoc) remove(key string) error {
