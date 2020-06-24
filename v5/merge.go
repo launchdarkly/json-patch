@@ -368,7 +368,6 @@ func getDiff(a, b map[string]interface{}) (map[string]interface{}, error) {
 			}
 		default:
 			panic(fmt.Sprintf("Unknown type:%T in key %s", av, key))
-			//return nil, fmt.Errorf("Unknown type:%T in key %s", av, key)
 		}
 	}
 	// Now add all deleted values as nil

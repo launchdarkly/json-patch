@@ -8,7 +8,7 @@ import (
 
 	flags "github.com/jessevdk/go-flags"
 
-	jsonpatch "github.com/launchdarkly/json-patch"
+	jsonpatch "github.com/launchdarkly/json-patch/v5"
 )
 
 type opts struct {
