@@ -392,7 +392,11 @@ func (d *partialDoc) add(key string, val *lazyNode) error {
 }
 
 func (d *partialDoc) get(key string) (*lazyNode, error) {
-	return (*d)[key], nil
+	v, ok := (*d)[key]
+	if !ok {
+		return v, errors.Wrapf(ErrMissing, "unable to get nonexistent key: %s", key)
+	}
+	return v, nil
 }
 
 func (d *partialDoc) remove(key string) error {
@@ -405,6 +409,23 @@ func (d *partialDoc) remove(key string) error {
 	return nil
 }
 
+func validateIndex(idx, length int) (int, error) {
+	if idx >= length {
+		return -1, errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
+	}
+
+	if idx < 0 {
+		if !SupportNegativeIndices {
+			return -1, errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
+		}
+		if idx < -length {
+			return -1, errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
+		}
+		idx += length
+	}
+	return idx, nil
+}
+
 // set should only be used to implement the "replace" operation, so "key" must
 // be an already existing index in "d".
 func (d *partialArray) set(key string, val *lazyNode) error {
@@ -412,6 +433,11 @@ func (d *partialArray) set(key string, val *lazyNode) error {
 	if err != nil {
 		return err
 	}
+	idx, err = validateIndex(idx, len(*d))
+	if err != nil {
+		return err
+	}
+
 	(*d)[idx] = val
 	return nil
 }
@@ -433,18 +459,9 @@ func (d *partialArray) add(key string, val *lazyNode) error {
 
 	cur := *d
 
-	if idx >= len(ary) {
-		return errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
-	}
-
-	if idx < 0 {
-		if !SupportNegativeIndices {
-			return errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
-		}
-		if idx < -len(ary) {
-			return errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
-		}
-		idx += len(ary)
+	idx, err = validateIndex(idx, len(ary))
+	if err != nil {
+		return err
 	}
 
 	copy(ary[0:idx], cur[0:idx])
@@ -462,8 +479,9 @@ func (d *partialArray) get(key string) (*lazyNode, error) {
 		return nil, err
 	}
 
-	if idx >= len(*d) {
-		return nil, errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
+	idx, err = validateIndex(idx, len(*d))
+	if err != nil {
+		return nil, err
 	}
 
 	return (*d)[idx], nil
@@ -477,18 +495,9 @@ func (d *partialArray) remove(key string) error {
 
 	cur := *d
 
-	if idx >= len(cur) {
-		return errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
-	}
-
-	if idx < 0 {
-		if !SupportNegativeIndices {
-			return errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
-		}
-		if idx < -len(cur) {
-			return errors.Wrapf(ErrInvalidIndex, "Unable to access invalid index: %d", idx)
-		}
-		idx += len(cur)
+	idx, err = validateIndex(idx, len(cur))
+	if err != nil {
+		return err
 	}
 
 	ary := make([]*lazyNode, len(cur)-1)

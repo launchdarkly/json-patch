@@ -454,11 +454,78 @@ func createNestedMap(m map[string]interface{}, depth int, objectCount *int) {
 	if depth == 0 {
 		return
 	}
-	for i := 0; i< 2;i++ {
+	for i := 0; i < 2; i++ {
 		nested := map[string]interface{}{}
 		*objectCount += 1
 		createNestedMap(nested, depth-1, objectCount)
 		m[fmt.Sprintf("key-%v", i)] = nested
+	}
+}
+
+func TestMatchesValue(t *testing.T) {
+	testcases := []struct {
+		name string
+		a    interface{}
+		b    interface{}
+		want bool
+	}{
+		{
+			name: "map empty",
+			a:    map[string]interface{}{},
+			b:    map[string]interface{}{},
+			want: true,
+		},
+		{
+			name: "map equal keys, equal non-nil value",
+			a:    map[string]interface{}{"1": true},
+			b:    map[string]interface{}{"1": true},
+			want: true,
+		},
+		{
+			name: "map equal keys, equal nil value",
+			a:    map[string]interface{}{"1": nil},
+			b:    map[string]interface{}{"1": nil},
+			want: true,
+		},
+
+		{
+			name: "map different value",
+			a:    map[string]interface{}{"1": true},
+			b:    map[string]interface{}{"1": false},
+			want: false,
+		},
+		{
+			name: "map different key, matching non-nil value",
+			a:    map[string]interface{}{"1": true},
+			b:    map[string]interface{}{"2": true},
+			want: false,
+		},
+		{
+			name: "map different key, matching nil value",
+			a:    map[string]interface{}{"1": nil},
+			b:    map[string]interface{}{"2": nil},
+			want: false,
+		},
+		{
+			name: "map different key, first nil value",
+			a:    map[string]interface{}{"1": true},
+			b:    map[string]interface{}{"2": nil},
+			want: false,
+		},
+		{
+			name: "map different key, second nil value",
+			a:    map[string]interface{}{"1": nil},
+			b:    map[string]interface{}{"2": true},
+			want: false,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := matchesValue(tc.a, tc.b)
+			if got != tc.want {
+				t.Fatalf("want %v, got %v", tc.want, got)
+			}
+		})
 	}
 }
 
@@ -479,12 +546,12 @@ func benchmarkMatchesValueWithDeeplyNestedFields(depth int, b *testing.B) {
 func BenchmarkMatchesValue1(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(1, b) }
 func BenchmarkMatchesValue2(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(2, b) }
 func BenchmarkMatchesValue3(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(3, b) }
-func BenchmarkMatchesValue4(b *testing.B) { benchmarkMatchesValueWithDeeplyNestedFields(4, b) }
-func BenchmarkMatchesValue5(b *testing.B) { benchmarkMatchesValueWithDeeplyNestedFields(5, b) }
-func BenchmarkMatchesValue6(b *testing.B) { benchmarkMatchesValueWithDeeplyNestedFields(6, b) }
-func BenchmarkMatchesValue7(b *testing.B) { benchmarkMatchesValueWithDeeplyNestedFields(7, b) }
-func BenchmarkMatchesValue8(b *testing.B) { benchmarkMatchesValueWithDeeplyNestedFields(8, b) }
-func BenchmarkMatchesValue9(b *testing.B) { benchmarkMatchesValueWithDeeplyNestedFields(9, b) }
+func BenchmarkMatchesValue4(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(4, b) }
+func BenchmarkMatchesValue5(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(5, b) }
+func BenchmarkMatchesValue6(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(6, b) }
+func BenchmarkMatchesValue7(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(7, b) }
+func BenchmarkMatchesValue8(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(8, b) }
+func BenchmarkMatchesValue9(b *testing.B)  { benchmarkMatchesValueWithDeeplyNestedFields(9, b) }
 func BenchmarkMatchesValue10(b *testing.B) { benchmarkMatchesValueWithDeeplyNestedFields(10, b) }
 
 func TestCreateMergePatchComplexRemoveAll(t *testing.T) {
