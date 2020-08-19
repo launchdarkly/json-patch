@@ -342,10 +342,6 @@ var BadCases = []BadCase{
 		`{ "foo": [ "all", "grass", "cows", "eat" ] }`,
 		`[ { "op": "move", "from": "/foo/1", "path": "/foo/4" } ]`,
 	},
-	{
-		`{ "baz": "qux" }`,
-		`[ { "op": "replace", "path": "/foo", "value": "bar" } ]`,
-	},
 	// Can't copy from non-existent "from" key.
 	{
 		`{ "foo": "bar"}`,
