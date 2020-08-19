@@ -222,6 +222,11 @@ var Cases = []Case{
 		`{ "bar": [null]}`,
 	},
 	{
+		`{ "foo": ["bar","baz"]}`,
+		`[ { "op": "replace", "path": "/foo/-1", "value": "bum"}]`,
+		`{ "foo": ["bar","bum"]}`,
+	},
+	{
 		fmt.Sprintf(`{ "foo": ["A", %q] }`, repeatedA(48)),
 		// The wrapping quotes around 'A's are included in the copy
 		// size, so each copy operation increases the size by 50 bytes.
@@ -540,12 +545,12 @@ func TestAdd(t *testing.T) {
 			err:  "Unable to access invalid index: -2: invalid index referenced",
 		},
 		{
-			name: "negative but negative disabled",
-			key:  "-1",
-			val:  lazyNode{},
-			arr:  partialArray{},
+			name:                   "negative but negative disabled",
+			key:                    "-1",
+			val:                    lazyNode{},
+			arr:                    partialArray{},
 			rejectNegativeIndicies: true,
-			err: "Unable to access invalid index: -1: invalid index referenced",
+			err:                    "Unable to access invalid index: -1: invalid index referenced",
 		},
 	}
 	for _, tc := range testCases {
